@@ -1,20 +1,33 @@
 import 'package:flutter/material.dart';
 import './note.dart';
+import 'dart:async';
+import 'package:notes/model/noteData.dart';
+import 'package:notes/utils/database_helper.dart';
+import 'package:sqflite/sqflite.dart';
 
 class Home extends StatefulWidget {
+
+ 
   @override
   _HomeState createState() => _HomeState();
 }
 
+
+
 class _HomeState extends State<Home> {
 
+  DatabaseHelper databaseHelper = DatabaseHelper();
+  List<NoteData> noteList;
   int count = 0;
   
 
-  navigateToNote(String appBarTitle){
-     Navigator.push(context, MaterialPageRoute(builder:(context){
-            return Note(appBarTitle);
+  navigateToNote(NoteData note,String appBarTitle) async{
+     bool result = await Navigator.push(context, MaterialPageRoute(builder:(context){
+            return Note(note,appBarTitle);
           }));
+      if(result == true){
+        updateListView();
+      }
   }
 
   ListView getNoteList(){
@@ -22,33 +35,91 @@ class _HomeState extends State<Home> {
       itemCount: count, 
       itemBuilder: (BuildContext context, int position){
         return Card(
-          elevation: 2,
-          color: Colors.blueGrey,
+          elevation: 0,
+          //color: Colors.deepOrangeAccent,
           child: ListTile(
             leading: CircleAvatar(
-              backgroundColor: Colors.cyanAccent,
+              backgroundColor: getPriorityColor(this.noteList[position].priority),
+              child: getPriorityIcon(this.noteList[position].priority),
+            ),
+            trailing: GestureDetector(
               child: Icon(
-                Icons.star,
-                color: Colors.white,
+                Icons.delete,
+                color: Colors.grey,
               ),
+              onTap: (){
+                _delete(context, noteList[position]);
+              },
             ),
-            trailing: Icon(
-              Icons.delete,
-              color: Colors.grey,
-            ),
-            title: Text("Title"),
-            subtitle: Text("Subtitle"),
+            title: Text(this.noteList[position].title),
+            subtitle: Text(this.noteList[position].date),
             onTap: (){
-              navigateToNote("Edit Note");
+              navigateToNote(this.noteList[position],"Edit Note");
             },
           ),
         );
       },
-      );
+    );
   }
- 
+
+  void _delete(BuildContext context, NoteData note) async{
+    int result = await databaseHelper.deleteNote(note.id);
+    if(result!=0){
+      _showSnackBar(context,'Deleted');
+      updateListView();
+    }
+  }
+
+  void _showSnackBar(BuildContext context, String message){
+    final snackBar = SnackBar(content: Text(message));
+    Scaffold.of(context).showSnackBar(snackBar);
+  }
+
+  Icon getPriorityIcon(int priority){
+    switch(priority){
+      case 1:
+          return Icon(Icons.star);
+          break;
+      case 2:
+          return Icon(Icons.star_half);
+          break;
+      default:
+          return Icon(Icons.star_half);
+    }
+  }
+
+  Color getPriorityColor(int priority){
+    switch(priority){
+      case 1:
+          return Colors.deepPurple;
+          break;
+      case 2:
+          return Colors.deepPurpleAccent;
+          break;
+      default:
+          return Colors.deepPurpleAccent;
+    }
+  }
+
+  void updateListView(){
+    final Future<Database> dbFuture = databaseHelper.initializeDatabase();
+    dbFuture.then((database) {
+      Future<List<NoteData>> noteListFuture = databaseHelper.getNoteDbList();
+      noteListFuture.then((noteList){
+        setState(() {
+          this.noteList = noteList;
+          this.count = noteList.length;
+        });
+      });
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    if(noteList == null){
+      noteList = List<NoteData>();
+      updateListView();
+    }
     return Scaffold(
       appBar: AppBar(
         title: Text('Notes'),
@@ -57,7 +128,7 @@ class _HomeState extends State<Home> {
       body: getNoteList(),
       floatingActionButton: FloatingActionButton(
         onPressed:(){
-           navigateToNote("Add Note");
+           navigateToNote(NoteData('','',2),"Add Note");
         },
         child: Icon(Icons.add_circle),
         elevation: 7.0,

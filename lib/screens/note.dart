@@ -1,31 +1,112 @@
 import 'package:flutter/material.dart';
+import 'package:notes/model/noteData.dart';
+import 'package:notes/utils/database_helper.dart';
+import 'package:intl/intl.dart';
+
+//import 'dart:async';
+
+//import 'package:sqflite/sqlite_api.dart';
 
 class Note extends StatefulWidget {
 
-  String appBarTitle;
-  Note(this.appBarTitle);
+  final String appBarTitle;
+  final NoteData note;
+  Note(this.note,this.appBarTitle);
   @override
-  _NoteState createState() => _NoteState(this.appBarTitle);
+  _NoteState createState() => _NoteState(this.note,this.appBarTitle);
   
 }
 
 class _NoteState extends State<Note> {
 
   String appBarTitle;
-  _NoteState(this.appBarTitle);
+  NoteData note;
+  DatabaseHelper helper = DatabaseHelper();
+  _NoteState(this.note,this.appBarTitle);
   static var _priority = ["High","Low"];
-  var _selected = _priority[0];
   TextEditingController titleController = TextEditingController();
   TextEditingController descriptionController = TextEditingController();
 
 
   moveToPreviousScreen(){
-    Navigator.pop(context);
+    Navigator.pop(context,true);
+  }
+
+  void updateTitle(){
+    note.title = titleController.text;
+  }
+  void updateDescription(){
+    note.description = descriptionController.text;
+  }
+
+  void priorityStringToInt(String value){
+    switch(value){
+      case 'High': note.priority = 1;
+                   break;
+      case 'Low' : note.priority = 2;
+                   break;
+    }
+  }
+
+  String getPriorityIntToString(int value){
+    String priority;
+    switch(value){
+      case 1: priority = _priority[0];
+              break;
+      case 2: priority = _priority[1];
+              break;     
+    }
+    return priority;
+  }
+
+  
+
+  void _save() async{
+    moveToPreviousScreen();
+    note.date = DateFormat.yMMMd().format(DateTime.now());
+    int result;
+    if(note.id!=null){
+      result = await helper.updateNote(note);
+    } else{
+      result = await helper.insertNote(note);
+    }
+    if(result != 0){
+      //_showAlert("Status", "Note Saved");
+    }else{
+      _showAlert("Status", "Error Saving Note");
+    }
+  }
+
+  void _delete() async{
+    moveToPreviousScreen();
+    if(note.id == null){
+     //_showAlert("Status", "No Note Deleted");
+     return;
+    }
+    int result = await helper.deleteNote(note.id);
+    if(result !=0){
+      //_showAlert("Status", "Note Deleted");
+    }else{
+      _showAlert("Status", "Error Deleting Note");
+    }
+  }
+
+  void _showAlert(String title,String message){
+    AlertDialog alertDialog = AlertDialog(
+      title: Text(title),
+      content: Text(message),
+    );
+    showDialog(
+      context: context,
+      builder: (_)=>alertDialog
+    );
   }
 
 
   @override
   Widget build(BuildContext context) {
+    titleController.text = note.title;
+    descriptionController.text = note.description;
     return WillPopScope(
           onWillPop:() => moveToPreviousScreen(),
           child: Scaffold(
@@ -37,21 +118,6 @@ class _NoteState extends State<Note> {
               moveToPreviousScreen();
             }
           ),
-          actions:<Widget>[
-            Padding(
-              padding: EdgeInsets.only(right:10),
-              child: IconButton(
-                icon: Icon(
-                  Icons.favorite_border,
-                  color: Colors.white,
-                ), 
-                onPressed: (){
-                  
-                },
-                splashColor: Colors.purpleAccent,
-                )
-              ),
-          ],
         ),
         body: SingleChildScrollView(
           child:Column(
@@ -61,7 +127,6 @@ class _NoteState extends State<Note> {
                 child: ListTile(
                   title:DropdownButton(
                     isExpanded: true,
-
                     iconEnabledColor: Colors.purple,
                     items: _priority.map((String dropDownStringItem){
                       return DropdownMenuItem<String>(
@@ -73,10 +138,10 @@ class _NoteState extends State<Note> {
                     }).toList(), 
                     onChanged: (value){
                       setState(() {
-                        _selected = value;
+                        priorityStringToInt(value);
                       });
                     },
-                    value: _selected,
+                    value: getPriorityIntToString(note.priority),
                   )
                 ),
               ),
@@ -86,7 +151,7 @@ class _NoteState extends State<Note> {
                   controller: titleController,
                   onChanged: (value){
                     setState(() {
-                      debugPrint("$value");
+                      updateTitle();
                     });
                   },
                   decoration: InputDecoration(
@@ -103,7 +168,7 @@ class _NoteState extends State<Note> {
                   controller: descriptionController,
                   onChanged: (value){
                     setState(() {
-                      debugPrint("$value");
+                      updateDescription();
                     });
                   },
                   keyboardType: TextInputType.multiline,
@@ -125,7 +190,7 @@ class _NoteState extends State<Note> {
                         padding: EdgeInsets.all(15),
                         onPressed: (){
                           setState(() {
-                            
+                            _save();
                           });
                         }, 
                         color: Colors.purple,
@@ -146,7 +211,7 @@ class _NoteState extends State<Note> {
                         padding: EdgeInsets.all(15),
                         onPressed: (){
                           setState(() {
-                            
+                            _delete();
                           });
                         }, 
                         color: Colors.purple,
