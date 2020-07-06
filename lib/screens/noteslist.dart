@@ -71,7 +71,10 @@ class _HomeState extends State<Home> {
   }
 
   void _showSnackBar(BuildContext context, String message){
-    final snackBar = SnackBar(content: Text(message));
+    final snackBar = SnackBar(
+      content: Text(message),
+      duration: Duration(milliseconds: 1000),
+      );
     Scaffold.of(context).showSnackBar(snackBar);
   }
 
