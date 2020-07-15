@@ -1,8 +1,8 @@
+import 'package:Notes/model/noteData.dart';
+import 'package:Notes/utils/database_helper.dart';
 import 'package:flutter/material.dart';
 import './note.dart';
 import 'dart:async';
-import 'package:notes/model/noteData.dart';
-import 'package:notes/utils/database_helper.dart';
 import 'package:sqflite/sqflite.dart';
 
 class Home extends StatefulWidget {

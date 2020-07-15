@@ -1,11 +1,7 @@
+import 'package:Notes/model/noteData.dart';
+import 'package:Notes/utils/database_helper.dart';
 import 'package:flutter/material.dart';
-import 'package:notes/model/noteData.dart';
-import 'package:notes/utils/database_helper.dart';
-import 'package:intl/intl.dart';
-
-//import 'dart:async';
-
-//import 'package:sqflite/sqlite_api.dart';
+import 'package:intl/intl.dart' as intl;
 
 class Note extends StatefulWidget {
 
@@ -34,6 +30,7 @@ class _NoteState extends State<Note> {
 
   void updateTitle(){
     note.title = titleController.text;
+    print(titleController.text);
   }
   void updateDescription(){
     note.description = descriptionController.text;
@@ -63,7 +60,7 @@ class _NoteState extends State<Note> {
 
   void _save() async{
     moveToPreviousScreen();
-    note.date = DateFormat.yMMMd().format(DateTime.now());
+    note.date = intl.DateFormat.yMMMd().format(DateTime.now());
     int result;
     if(note.id!=null){
       result = await helper.updateNote(note);
@@ -147,13 +144,8 @@ class _NoteState extends State<Note> {
               ),
               Padding(
                 padding: EdgeInsets.all(10.0),
-                  child: TextField(
+                  child: TextFormField(
                   controller: titleController,
-                  onChanged: (value){
-                    setState(() {
-                      updateTitle();
-                    });
-                  },
                   decoration: InputDecoration(
                     labelText: 'Title',
                     border: OutlineInputBorder(
@@ -166,11 +158,6 @@ class _NoteState extends State<Note> {
                 padding: EdgeInsets.all(10.0),
                   child: TextField(
                   controller: descriptionController,
-                  onChanged: (value){
-                    setState(() {
-                      updateDescription();
-                    });
-                  },
                   keyboardType: TextInputType.multiline,
                   maxLines: null,
                   decoration: InputDecoration(
@@ -190,6 +177,8 @@ class _NoteState extends State<Note> {
                         padding: EdgeInsets.all(15),
                         onPressed: (){
                           setState(() {
+                            updateTitle();
+                            updateDescription();
                             _save();
                           });
                         }, 

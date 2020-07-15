@@ -1,4 +1,4 @@
-#Sun Jul 05 14:03:16 IST 2020
+#Wed Jul 15 20:43:07 IST 2020
 base.0=/Users/akashtdm/Desktop/NotesApp/build/app/intermediates/dex/debug/mergeDexDebug/out/classes.dex
 path.0=classes.dex
 renamed.0=classes.dex
